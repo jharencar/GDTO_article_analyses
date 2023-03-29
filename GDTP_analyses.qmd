@@ -1,0 +1,114 @@
+---
+title: "GDTO_analyses"
+author: "Julia Harenčár"
+date: "3/29/2023"
+execute:
+  echo: true #will keep code chunks
+  warning: false #removes warning functions
+format: 
+  html: 
+    self-contained: true #makes one html file to render that is sharable
+    page-layout: full #uses the full page
+    code-fold: true #lets user fold up codes
+    code-tools: true #makes an option in the upper left for users to reveal/hide all code and copy source code
+    #makes long lines of code rap
+    code-overflow: wrap
+    #makes table of contents
+    toc: true
+    #sets location of table of contents
+    toc-location: left
+#set theme settings. in this case user can switch between light and dark mode
+theme:
+  #give light option
+  light: flatly
+  #give dark option
+  dark: darkly
+---
+
+# Growth-defense trade-off article analyses
+
+Analyses of herbivory and chemistry data for the article, "Growth-defense trade-offs facilitate species coexistence: empirical evidence from recently diverged tropical plants."
+
+#### Loading packages and setting defaults
+```{r}
+#| warning: false
+# analysis
+library("DHARMa")
+# plotting
+library("tidyverse")
+library("ggplot2")
+library("patchwork")
+library("RColorBrewer")
+theme_set(theme_bw())
+
+```
+
+## Wild herbivory
+
+Analyses comparing wild herbivory between *Costus villosissimus* and *C. allenii*.
+
+### Presence v absence 
+
+Analysis comparing the presence or absence of herbivory on wild plants from both 2019 and 2022.
+
+First, we read in the 2019 and 2022 data, create presence/absence columns for each, and combine them into a single dataframe.
+
+```{r}
+#| warning: false
+# 2019 data
+Wherb19 <- read.csv("vill-all_RLB-herbivory_data_2019-Herbivory.csv", header=TRUE)
+# create presence/absence of herbivory column
+Wherb19 <- Wherb19 %>% mutate(pa = case_when(
+  per_herbivory == 0 ~ 0,
+  per_herbivory != 0 ~ 1
+))
+
+# 2020 data
+Wherb22 <- read.csv("2022_wild_herbivory.csv", header = T)
+# create presence/absence of herbivory column
+Wherb22 <- Wherb22 %>% 
+  mutate(pa = case_when(
+  num_w_RLBH == 0 ~ 0,
+  num_w_RLBH != 0 ~ 1
+)) %>% dplyr::select(date, spp, id, pa)
+
+# making combined 2019/2022 dataset
+Wherb19$year <- '2019'
+Wherb22$year <- '2022'
+names(Wherb19) <- c("date","ID", "spp", "ave_per_herb", "pa", "year")
+Wherb_full <- Wherb22 %>% 
+  dplyr::select(spp,pa,year) %>% 
+  full_join((Wherb19 %>% dplyr::select( "spp", "pa", "year")),.) 
+```
+Next, we evaluate the potential impacts of plant species and year on the presence vs absence of herbivory with a binomial regression.
+```{r}
+# binomial regression 
+bin_reg <- glm(Wherb_full$pa ~ Wherb_full$spp + Wherb_full$year, family = "binomial")
+summary(bin_reg)
+```
+We see that both species and year are significant predictors of the presence of herbivory at a < 0.00001 level, with greater herbivory on *C.allenii* and during the wet year, 2022. 
+
+We now check to ensure the model is not under- or over-dispersed.
+```{r}
+# Check over or under-dispersion with the package DHARMA. 
+simOut <- simulateResiduals(bin_reg)
+plot(simOut) # dispersion looks good
+testDispersion(simOut) # dispersion = 1.0241, p-value = 0.808; not overdispersed
+```
+The model is not overdispersed! :D
+
+### Percent herbivory (subset)
+
+Analysis comparing the amount of herbivory as a percentage of leaf area between species for a random subset fo wild plants in 2019 and 2022.
+
+```{r}
+
+```
+
+
+```{r}
+#| echo: false
+2 * 2
+```
+
+The `echo: false` option disables the printing of code (only output is displayed).
