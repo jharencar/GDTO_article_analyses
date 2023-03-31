@@ -35,6 +35,7 @@ Loading packages and setting defaults:
 library("DHARMa")
 library("car")
 library("lme4")
+library("glmmTMB") 
 # plotting
 library("tidyverse")
 library("ggplot2")
@@ -168,8 +169,9 @@ Wherb_full_subset <- Wherb22_subset %>%
 
 # plotting subset data
 # plot of herbivory subset data - probably not for inclusion # 
-ggplot(data=Wherb_full_subset, aes(x=year, y=ave_per_herb)) +
-  geom_boxplot(aes(fill = spp)) + 
+ggplot(data=Wherb_full_subset, aes(x=year, y=ave_per_herb, fill = spp)) +
+  geom_boxplot(outlier.shape=NA) + 
+  geom_point(aes(alpha=0.5), position=position_jitterdodge()) +
   scale_fill_manual(values = c("#cc79a7", "#f0e442"), name = "Species",
                     labels=c("alle" = expression(italic("C. allenii")),
                              "vill" = expression(italic("C. villosissimus")))) +
@@ -216,7 +218,7 @@ tough <- read.csv("leaf.toughness.csv", header = TRUE)
 
 # Plot leaf toughness 
 ggplot(data=tough, aes(x=species, y=ave)) +
-  geom_boxplot(aes(fill = species)) + 
+  geom_boxplot(outlier.shape=NA, aes(fill = species)) + 
   scale_fill_manual(values = c("#cc79a7", "#f0e442"), name = "Species",
                     labels=c("alle" = expression(italic("C. allenii")),
                              "vill" = expression(italic("C. villosissimus")))) +
@@ -269,7 +271,7 @@ names(chem) <-  c("Accession", "Species", "DPPH", "Oxidative.Capacity",
 # Plot Chemistry data
 # Saponins
  S <- ggplot(chem, aes(x=Species, y=Concentration.of.Saponins)) +
-  geom_boxplot(aes(fill = Species)) + 
+  geom_boxplot(outlier.shape=NA, aes(fill = Species)) + 
   scale_fill_manual(values = c("#cc79a7", "#f0e442"), name = "Species") +
   ggtitle("Saponins") + 
   geom_jitter(alpha=0.6, width=0.15) +
@@ -286,7 +288,7 @@ names(chem) <-  c("Accession", "Species", "DPPH", "Oxidative.Capacity",
 
 # Non-flavonoid Phenolics
 P <- ggplot(chem, aes(x=Species, y=Concentration.of.NF.Phenolics)) +
-  geom_boxplot(aes(fill = Species)) + 
+  geom_boxplot(outlier.shape=NA, aes(fill = Species)) + 
   scale_fill_manual(values = c("#cc79a7", "#f0e442"), name = "Species") +
   ggtitle("Non-Flavonoid Phenolics") +
   geom_jitter(alpha=0.6, width=0.15) +
@@ -303,7 +305,7 @@ P <- ggplot(chem, aes(x=Species, y=Concentration.of.NF.Phenolics)) +
 
 # Flavonids
 Fl <- ggplot(chem, aes(x=Species, y=Concentration.of.Flavonols)) +
-  geom_boxplot(aes(fill = Species)) + 
+  geom_boxplot(outlier.shape=NA, aes(fill = Species)) + 
   scale_fill_manual(values = c("#cc79a7", "#f0e442"), name = "Species",
                     labels=c("ALLE" = expression(italic("C. allenii")),
                              "VILL" = expression(italic("C. villosissimus")))) +
@@ -322,7 +324,7 @@ Fl <- ggplot(chem, aes(x=Species, y=Concentration.of.Flavonols)) +
 
 # Oxidative capacity 
 OC <- ggplot(chem, aes(x=Species, y=Oxidative.Capacity)) +
-  geom_boxplot(aes(fill = Species)) + 
+  geom_boxplot(outlier.shape=NA, aes(fill = Species)) + 
   scale_fill_manual(values = c("#cc79a7", "#f0e442"), name = "Species",
                     labels=c("ALLE" = expression(italic("C. allenii")),
                              "VILL" = expression(italic("C. villosissimus")))) +
@@ -344,8 +346,8 @@ OC <- ggplot(chem, aes(x=Species, y=Oxidative.Capacity)) +
   theme(plot.tag.position = c(0, 1),
         plot.tag = element_text(size = 11.5, hjust = 0, vjust = 0))
 
-#ggsave("Chemistry/Chemistry_plot", device = "png", width = 24, height = 20, units = "cm")
-ggsave("Chemistry_plot_free_scale.png", device = "png", width = 18, height = 20, units = "cm")
+##ggsave("Chemistry/Chemistry_plot", device = "png", width = 24, height = 20, units = "cm")
+#ggsave("Chemistry_plot_free_scale.png", device = "png", width = 18, height = 20, units = "cm")
 ```
 Next, we coonduct t-tests comparing values between species and correct for multiple tests. 
 ```{r}
@@ -355,31 +357,31 @@ Next, we coonduct t-tests comparing values between species and correct for multi
 alle_chem <- chem %>% filter(Species=="ALLE")
 vill_chem <- chem %>% filter(Species=="VILL")
 
-# non-Flavonoid Phenolics 
-shapiro.test(alle_chem$Concentration.of.NF.Phenolics) # W = 0.9032, p-value = 0.3508
-qqp(alle_chem$Concentration.of.NF.Phenolics, "norm") 
-shapiro.test(vill_chem$Concentration.of.NF.Phenolics) # W = 0.94897, p-value = 0.7204
-qqp(vill_chem$Concentration.of.Phenolics_nf, "norm") 
-
-# Flavonoids
-shapiro.test(alle_chem$Concentration.of.Flavonols) # W = 0.96981, p-value = 0.8971
-qqp(alle_chem$Concentration.of.Flavonols, "norm") 
-shapiro.test(vill_chem$Concentration.of.Flavonols) # W = 0.90093, p-value = 0.3367
-qqp(vill_chem$Concentration.of.Flavonols, "norm") 
-
-# Saponins 
-shapiro.test(alle_chem$Concentration.of.Saponins) # W = 0.86689, p-value = 0.1743
-qqp(alle_chem$Concentration.of.Saponins, "norm") 
-shapiro.test(vill_chem$Concentration.of.Saponins) # W = 0.85908, p-value = 0.1486
-qqp(vill_chem$Concentration.of.Saponins, "norm") 
-
-# Oxidative Capacity
-shapiro.test(alle_chem$Oxidative.Capacity) # W = 0.74073, p-value = 0.01014
-qqp(alle_chem$Oxidative.Capacity, "norm") # NOT normal
-hist(alle_chem$Oxidative.Capacity, breaks = 20)
-shapiro.test(vill_chem$Oxidative.Capacity) # W = 0.86363, p-value = 0.1631
-qqp(vill_chem$Oxidative.Capacity, "norm") 
-hist(vill_chem$Oxidative.Capacity, breaks = 20)
+# # non-Flavonoid Phenolics 
+# shapiro.test(alle_chem$Concentration.of.NF.Phenolics) # W = 0.9032, p-value = 0.3508
+# qqp(alle_chem$Concentration.of.NF.Phenolics, "norm") 
+# shapiro.test(vill_chem$Concentration.of.NF.Phenolics) # W = 0.94897, p-value = 0.7204
+# qqp(vill_chem$Concentration.of.Phenolics_nf, "norm") 
+# 
+# # Flavonoids
+# shapiro.test(alle_chem$Concentration.of.Flavonols) # W = 0.96981, p-value = 0.8971
+# qqp(alle_chem$Concentration.of.Flavonols, "norm") 
+# shapiro.test(vill_chem$Concentration.of.Flavonols) # W = 0.90093, p-value = 0.3367
+# qqp(vill_chem$Concentration.of.Flavonols, "norm") 
+# 
+# # Saponins 
+# shapiro.test(alle_chem$Concentration.of.Saponins) # W = 0.86689, p-value = 0.1743
+# qqp(alle_chem$Concentration.of.Saponins, "norm") 
+# shapiro.test(vill_chem$Concentration.of.Saponins) # W = 0.85908, p-value = 0.1486
+# qqp(vill_chem$Concentration.of.Saponins, "norm") 
+# 
+# # Oxidative Capacity
+# shapiro.test(alle_chem$Oxidative.Capacity) # W = 0.74073, p-value = 0.01014
+# qqp(alle_chem$Oxidative.Capacity, "norm") # NOT normal
+# hist(alle_chem$Oxidative.Capacity, breaks = 20)
+# shapiro.test(vill_chem$Oxidative.Capacity) # W = 0.86363, p-value = 0.1631
+# qqp(vill_chem$Oxidative.Capacity, "norm") 
+# hist(vill_chem$Oxidative.Capacity, breaks = 20)
 
 # Stats
 # Phenolics
@@ -437,7 +439,7 @@ singleSP.no0 <- singleSP[singleSP$mm2.eaten != 0,]
 
 #simple box plot of palatability data, shows potential for slight trend towards more vill herbivory.
 palatability <- ggplot(singleSP.no0, aes(trial.species, mm2.eaten)) + 
-  geom_boxplot(aes(fill = trial.species)) + 
+  geom_boxplot(outlier.shape=NA, aes(fill = trial.species)) + 
   ggtitle("Palatability Trials") + 
   geom_jitter(alpha=0.6, width=0.15) +
   scale_fill_manual(values = c("#cc79a7", "#f0e442"), name = "Species") +
@@ -455,7 +457,53 @@ palatability
 
 Next, we evaluate whether beetles find *C. villosissimus* or *C. allenii* more palatable:
 ```{r}
+# check out the distribution of the data:
+hist(singleSP.no0$mm2.eaten, breaks = 50) # clearly not normal
 
+# looking at the fit of different distributions using QQ plots
+par(mfrow=c(3,1))
+qqp(singleSP.no0$mm2.eaten, "norm")
+qqp(singleSP.no0$mm2.eaten, "lnorm") # best fit 
+MASS::fitdistr(singleSP.no0$mm2.eaten,"Poisson")
+qqPlot(singleSP.no0$mm2.eaten, distribution = "pois",lambda = 2) # okay fit 
+
+# regression model - log transformed response and date as a random effect
+gBPT  <- lmer(log(singleSP.no0$mm2.eaten) ~ trial.species * (1 | date), data = singleSP.no0)  
+summary(gBPT)
+# regression model - log transformed response and date as a fixed effect
+gBPT2  <- lm(log(singleSP.no0$mm2.eaten) ~ trial.species * date, data = singleSP.no0)  
+summary(gBPT2)
+
+# HOW DO I determine if I can leave out date as a random effect and just run a t-test? 
+
+t.test(log(singleSP.no0$mm2.eaten) ~ trial.species, data = singleSP.no0) # t = -1.1442, df = 28.831, p-value = 0.2619
+
+# # regression model - poisson 
+# pBPT  <- glmer(mm2.eaten ~ trial.species + (1 | date), 
+#                data = singleSP.no0, 
+#                family = poisson)  
+# summary(pBPT)
+
+# evaluating model assumptions
+# compare residuals
+# log transformed
+qqnorm(resid(gBPT)) 
+qqline(resid(gBPT))
+# # poisson
+# qqnorm(resid(pBPT)) 
+# qqline(resid(pBPT))
+# # log looks a bit better
+
+# looking for over/under dispersion
+# log transformed
+gsimOut <- simulateResiduals(gBPT)
+plot(gsimOut) # looks good
+testDispersion(gsimOut) # p-value = 0.928
+# # poisson
+# psimOut <- simulateResiduals(pBPT)
+# plot(psimOut) # no red flags but doesn't fit as well as log transformed
+# testDispersion(psimOut) # p-value = 0.152
+# # both don't set off warnings, but log transformed looks better.
 ```
 
 ### Choice
@@ -476,6 +524,7 @@ BCT.no.0 <- BCT[,1:6] %>% filter(!(vill.mm2eaten == 0 & alle.mm2eaten == 0))
 BCT.no.0 <- BCT.no.0 %>% filter(!(Species.found.on == "alle"))
 
 # plotting
+BCT.no.0$beetleID <- 1:nrow(BCT.no.0) # assign each trial (each beetle) an ID before splitting each trial into two rows (one for each species) 
 # convert to long format
 BCT.no.0.long <- BCT.no.0 %>% 
   pivot_longer(cols = c(vill.mm2eaten, alle.mm2eaten),
@@ -485,7 +534,7 @@ BCT.no.0.long <- BCT.no.0 %>%
 BCT.no.0.long$trial.spp <- substr(BCT.no.0.long$trial.spp, 1, 4) 
 # box plot of choice data 
 choice <- ggplot(BCT.no.0.long, aes(trial.spp, mm2eaten)) + 
-  geom_boxplot(aes(fill = trial.spp)) + 
+  geom_boxplot(outlier.shape=NA, aes(fill = trial.spp)) + 
   scale_fill_manual(values = c("#cc79a7", "#f0e442"), name = "Species",
                     labels=c("alle" = expression(italic("C. allenii")),
                              "vill" = expression(italic("C. villosissimus")))) +
@@ -497,7 +546,7 @@ choice <- ggplot(BCT.no.0.long, aes(trial.spp, mm2eaten)) +
   guides(fill="none") +
   scale_x_discrete(labels=c("alle" = expression(italic("C. allenii")), 
                             "vill" = expression(italic("C. villosissimus")))) + 
-  theme(axis.text.x = element_text(angle = 10, hjust = 0.6, colour = "black")) + 
+  theme(axis.text.x = element_text(hjust = 0.6, colour = "black")) + 
   #geom_text(x='alle', y=33, aes(label = "p<0.05"), size=3.5) +
   theme(axis.text = element_text(size = 12))   
 
@@ -537,4 +586,90 @@ t.test(BCT.no.0$vill.mm2eaten, BCT.no.0$alle.mm2eaten, paired = T) # t = 1.0992,
 OKAY! So I think this way to analyze the data makes sense, but I need help figuring out how to talk about it. The p-value is definitely not 'significant' (0.28), but there is a trend in the data towards greater herbivory on vill than alle (as seen in the figure above). I also saw this in the other ways I analyzed the data. For example, in a bayesian framework, 80% or so of the posterior distribution supported beetles eating more vill than alle. How do I talk about this in the article to accurately represent the data?
 
 Here is my best guess:
+  Roleld leaf beetles, on average, ate more *C. villosissimus* than *C. allenii*. These trends were not significant at the 0.05 level, likely due to high variability in beetle behavior. However, the trend is present in both palatibility and choice trials, and aligns with chemistry and toughness data: beetles are expected to prefer the species with thinner, less chemically defended leaves. 
+  This pattern is also contradictory to the clearly greater beetle herbivory on *C. allenii* than *C. villosissimus* seen in the wild. To understand whether this contradiction is due to differing environmental conditions in the habitat of each species, we placed 'herbivory arrays' into intermediate habitat.
   
+## Herbivory arrays
+  Herbivory arrays consisted of a potted plant of each species (*C. villosissimus* and *C. allenii*) placed near a wild plant of a third species (*C. scaber*) that was colonized by at least one roleld leaf beetle. Arrays were placed in intermediate habitat along a creek on the seasonally dry side of the panamanian isthmus. It was not pooossible to accurately quantify the area eaten (area og beetle damage) after plants were in the field for 3 weeks, so we instead evaluate the proportion of healthy stems that experienced herbivory. (analysis of best guess estimates of area yeild qualitatively the same result)
+  
+Data importing, cleaning, and plotting:
+```{r}
+array <- read.csv("Herbivory_arrays_220703.csv", header = T)
+names(array) <- c("ID", "array_num", "alt_ID","spp", "site", "date", "herbivory_yn", 
+                  "num_RLs", "num_stms_herb", "lf1_herb", "lf1_area", "lf2_herb", "lf2_area", 
+                  "lf3_herb", "lf3_area", "lf4_herb", "lf4_area", "lf5.herb", "lf5_area", 
+                  "lf6.herbivory", "lf6.area", "lf7.herbivory", "lf7.area", "lf8.herbivory", 
+                  "lf8.area", "lf9.herbivory", "lf9.area", "lf10.herbivory", "lf10.area", 
+                  "lf11.herbivory", "lf11.area", "notes")
+
+# Filter to only include census dates, select RL count cols, calculate proportion of rls with herbivory
+array <- array %>% 
+  dplyr::select(ID, array_num, spp, site, date, herbivory_yn, num_RLs, num_stms_herb) %>% # choose only certain columns to include
+  filter(!is.na(num_stms_herb)) %>% # remove rows with no data in the 'num_stms_herb' column
+  mutate(prop_rl_herb = num_stms_herb/num_RLs)
+
+# plot
+ggplot(array, aes(spp, prop_rl_herb)) + 
+  geom_boxplot(aes(fill=spp)) + 
+  ggtitle("Herbivory Arrays") +
+  geom_jitter(alpha=0.6, width=0.15) +
+  scale_fill_manual(values = c("#cc79a7", "#f0e442"), name = "Species",
+                    labels=c("alle" = expression(italic("C. allenii")),
+                             "vill" = expression(italic("C. villosissimus")))) +
+  theme(plot.title = element_text(hjust = 0.5), legend.text.align = 0) + 
+  xlab("") +
+  guides(fill="none") +
+  ylab("Proportion of stems with herbivory") + 
+  scale_x_discrete(labels=c("alle" = expression(italic("C. allenii")), 
+                            "vill" = expression(italic("C. villosissimus")))) + 
+  theme(axis.text.x = element_text(angle = 10, hjust = 0.6, colour = "black"))
+
+# ggsave("arrays_lf_proportion_plot.png", device = "png", width = 6, height = 8, units = "cm")
+```
+Analyses:
+```{r}
+# regression model - beta distribution (proportion)
+# add 0.00001 to 0 values and subtract it from 1 values to fit beta regression
+array <- array %>% mutate(prop_rl_herb = case_when(
+  prop_rl_herb == 0 ~ 0.00001,
+  prop_rl_herb == 1 ~ 0.9999,
+  TRUE ~ prop_rl_herb
+))
+
+# histogram of response
+hist(array$prop_rl_herb, breaks=10)
+
+# regression model
+AH <- glmmTMB(prop_rl_herb ~ spp + (1 | site) + (1 | date),
+              data = array, 
+              family=beta_family(link = "logit"))
+summary(AH)  
+
+# evaluating model assumptions
+# check residuals
+qqnorm(resid(AH)) 
+qqline(resid(AH)) # bad
+# looking for over/under dispersion
+simOut <- simulateResiduals(AH)
+plot(simOut) # BAD
+testDispersion(simOut) # 
+# regardless of model distribution, both random effects (site and date)
+# explain almost no variation. The model also does not fit well 
+# due to the odd distribution of the response variable,
+# Attempting t-test below given that random variables appear unimportant 
+# and the difference of amount eaten between species is roughly normal. 
+
+# get proportion of rolled leaves in long format for paired t-test
+dat <- array %>% pivot_wider(., id_cols=array_num, names_from = spp, values_from = prop_rl_herb)
+# assessing whether difference is normally distributed for use of paired t-test
+shapiro.test(dat$alle-dat$vill) # p-value = 0.0359; close to normal
+hist(dat$alle-dat$vill)
+qqp(dat$alle-dat$vill, "norm")
+
+# paired t-test
+wilcox.test(dat$alle, dat$vill, paired = T) # V = 110, p-value = 0.111
+t.test(dat$alle, dat$vill, paired = T) # t = 1.6954, df = 25, p-value = 0.1024
+
+# all results are qualitatively (and close to quantitatively) the same: no significant difference between species.
+## NOTE - pick up in paper - explain as above - report t-test
+```
