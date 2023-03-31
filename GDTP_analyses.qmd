@@ -221,6 +221,7 @@ ggplot(data=tough, aes(x=species, y=ave)) +
                     labels=c("alle" = expression(italic("C. allenii")),
                              "vill" = expression(italic("C. villosissimus")))) +
   ggtitle("Leaf Toughness") +
+  geom_jitter(alpha=0.6, width=0.15) +
   theme(plot.title = element_text(hjust = 0.5), legend.text.align = 0) +
   xlab("") +
   ylab("leaf toughness (g)")+
@@ -271,6 +272,7 @@ names(chem) <-  c("Accession", "Species", "DPPH", "Oxidative.Capacity",
   geom_boxplot(aes(fill = Species)) + 
   scale_fill_manual(values = c("#cc79a7", "#f0e442"), name = "Species") +
   ggtitle("Saponins") + 
+  geom_jitter(alpha=0.6, width=0.15) +
   guides(fill="none") +
   theme(plot.title = element_text(hjust = 0.5)) + 
   xlab("") +
@@ -286,7 +288,8 @@ names(chem) <-  c("Accession", "Species", "DPPH", "Oxidative.Capacity",
 P <- ggplot(chem, aes(x=Species, y=Concentration.of.NF.Phenolics)) +
   geom_boxplot(aes(fill = Species)) + 
   scale_fill_manual(values = c("#cc79a7", "#f0e442"), name = "Species") +
-  ggtitle("Non-Flavonoid Phenolics") + 
+  ggtitle("Non-Flavonoid Phenolics") +
+  geom_jitter(alpha=0.6, width=0.15) +
   guides(fill="none") +
   theme(plot.title = element_text(hjust = 0.5)) + 
   xlab("") +
@@ -304,7 +307,8 @@ Fl <- ggplot(chem, aes(x=Species, y=Concentration.of.Flavonols)) +
   scale_fill_manual(values = c("#cc79a7", "#f0e442"), name = "Species",
                     labels=c("ALLE" = expression(italic("C. allenii")),
                              "VILL" = expression(italic("C. villosissimus")))) +
-  ggtitle("Flavonoids") + 
+  ggtitle("Flavonoids") +
+  geom_jitter(alpha=0.6, width=0.15) +
   theme(plot.title = element_text(hjust = 0.5), legend.text.align = 0) + 
   xlab("") +
   ylab("Concentration of Flavonoids") + 
@@ -322,7 +326,8 @@ OC <- ggplot(chem, aes(x=Species, y=Oxidative.Capacity)) +
   scale_fill_manual(values = c("#cc79a7", "#f0e442"), name = "Species",
                     labels=c("ALLE" = expression(italic("C. allenii")),
                              "VILL" = expression(italic("C. villosissimus")))) +
-  ggtitle("Oxidative Capacity") + 
+  ggtitle("Oxidative Capacity") +
+  geom_jitter(alpha=0.6, width=0.15) +
   theme(plot.title = element_text(hjust = 0.5), legend.text.align = 0) + 
   xlab("") +
   ylab("Oxidative Capacity (1-DPPH)") + 
@@ -434,6 +439,7 @@ singleSP.no0 <- singleSP[singleSP$mm2.eaten != 0,]
 palatability <- ggplot(singleSP.no0, aes(trial.species, mm2.eaten)) + 
   geom_boxplot(aes(fill = trial.species)) + 
   ggtitle("Palatability Trials") + 
+  geom_jitter(alpha=0.6, width=0.15) +
   scale_fill_manual(values = c("#cc79a7", "#f0e442"), name = "Species") +
   guides(fill="none") +
   theme(plot.title = element_text(hjust = 0.5)) +
@@ -455,15 +461,15 @@ Next, we evaluate whether beetles find *C. villosissimus* or *C. allenii* more p
 ### Choice
 For choice trials, we placed beetles in ramekins (again with wet paper and perforated lids) with one 1.5 cm2 leaf square of both C. villosissimus and C. allenii and quantified the leaf area eaten for each species after 12 hours. We conducted 13 successful choice trials in 2019 and 22 in 2022 (a trial was considered unsuccessful and removed if the beetle did not eat either leaf square). 
 
-Again, we first read in, clean, and plot the data:
+Again, we first read in, clean, and plot the data. We will plot it alongside the palatability data for easy comparison.
 ```{r}
 # read in the data
 btd <- read.csv("beetle_trials.csv", header = TRUE) 
 # subset rows with alle and vill together as trial - aka the choice trials
 BCT <- btd[btd$Species.in.trial =="alle/vill",] 
 # converting character to numeric
-BCT$vill.mm2eaten <- as.numeric(aOvBT$vill.mm2eaten)
-BCT$alle.mm2eaten <- as.numeric(aOvBT$alle.mm2eaten) 
+BCT$vill.mm2eaten <- as.numeric(BCT$vill.mm2eaten)
+BCT$alle.mm2eaten <- as.numeric(BCT$alle.mm2eaten) 
 # remove trials in which beetles did not eat either spp
 BCT.no.0 <- BCT[,1:6] %>% filter(!(vill.mm2eaten == 0 & alle.mm2eaten == 0))
 # remove trials in which beetles were collected from alle (focal species)
@@ -484,6 +490,7 @@ choice <- ggplot(BCT.no.0.long, aes(trial.spp, mm2eaten)) +
                     labels=c("alle" = expression(italic("C. allenii")),
                              "vill" = expression(italic("C. villosissimus")))) +
   ggtitle("Choice Trials") + 
+  geom_jitter(alpha=0.6, width=0.15) +
   theme(plot.title = element_text(hjust = 0.5), legend.text.align = 0) + 
   xlab("") +
   ylab(bquote("herbivore damage ("~mm^2~"eaten)")) + 
@@ -499,13 +506,13 @@ palatability + choice + plot_annotation(tag_levels = 'A', tag_suffix = ')') &
   theme(plot.tag.position = c(0, 1),
         plot.tag = element_text(size = 11.5, hjust = 0, vjust = 0))
 
-ggsave("RLB_feeding_trials_plot", device = "png", width = 13, height = 7, units = "cm")
+#ggsave("RLB_feeding_trials_plot", device = "png", width = 13, height = 7, units = "cm")
 #ggsave("beetle_choice_plot", device = "png", width = 5, height = 5, units = "cm")
 #ggsave("beetle_choice_plot2", device = "png", width = 9, height = 6, units = "cm")
 
 ```
 
-Now for the analysis! 
+Now for the analysis! We first take the difference of mm2 eaten of each species for each beetle/trial to get a single preference value. We then evaluate the impact of a random effect, date, on that preference value. 
 ```{r}
 # take difference of mm2 eaten of each species for each beetle/trial to get a single preference value. (mm2 vill eaten - mm2 alle eaten)
 BCT.no.0 <- BCT.no.0 %>% mutate(preference = vill.mm2eaten - alle.mm2eaten)
@@ -519,103 +526,15 @@ summary(BCT_lm) # looks like date doesn't matter
 # as random effect (just looking at variance)
 BCT_lmer <- lmer(preference ~ (1|date), data = (BCT.no.0))
 summary(BCT_lmer) # variance explained by date 2 orders of magnitude lower than residual variance :)
-
+```
+We see that, when treated as a fixed effect, no date has a significant (to the .05 level) impact on beetle preference. When treated as a random effect, the variance explained by date 2 orders of magnitude lower than residual variance. Together, this indicates date is not important to include when assessing preference. 
+  So, next we compare the mean amount eaten of each species within a trial with a paired t-test to evaluate whether beetles prefer one species over ther other in controlled trial conditions
+```{r}
 # now that I am convinced the random variable is not strongly influencing preference, I can compare amount eaten of each species within trial with a paired T-test. 
 # paired t-test
-t.test(BCT.no.0$vill.mm2eaten, BCT.no.0$alle.mm2eaten, paired = T)
+t.test(BCT.no.0$vill.mm2eaten, BCT.no.0$alle.mm2eaten, paired = T) # t = 1.0992, df = 34, p-value = 0.2794
 ```
-OKAY! So I think this way to analyze the data makes sense, but I need help figuring out how to talk about it. the p-value is not significant to the 0.05 level (0.28), but there is a trend in the data towards greater herbivory on vill than alle (as seen in the figure above). I also saw this in the other ways I analyzed the data. For example, in a bayesian framework, 80% or so of the posterior distribution supported beetles eating more vill than alle. How do I talk about this in the article too accurately represent the data?
+OKAY! So I think this way to analyze the data makes sense, but I need help figuring out how to talk about it. The p-value is definitely not 'significant' (0.28), but there is a trend in the data towards greater herbivory on vill than alle (as seen in the figure above). I also saw this in the other ways I analyzed the data. For example, in a bayesian framework, 80% or so of the posterior distribution supported beetles eating more vill than alle. How do I talk about this in the article to accurately represent the data?
 
 Here is my best guess:
   
-  
-
-
-```{r}
-# ## previous beetle choice trial analysis:
-# # convert to long format for analysis
-# BCT.no.0$beetleID <- 1:nrow(BCT.no.0) # assign each trial (each beetle) an ID before splitting each trial into two rows (one for each species) 
-# BCT.no.0 <- BCT.no.0 %>% 
-#   pivot_longer(cols = c(vill.mm2eaten, alle.mm2eaten),
-#                names_to = "trial.spp",
-#                values_to = "mm2eaten")
-# 
-# # look at distribution of response
-# hist(BCT.no.0$mm2eaten, breaks = 50) # likely 0 inflated poisson or 0 inflated lognormal
-# qqp(BCT.no.0$mm2eaten, "norm") # BAD
-# qqp((BCT.no.0$mm2eaten+1), "lnorm") # added one to log transform data with 0s, looks 0 inflated but otherwise fine
-# 
-# # regression model - log transformed response + 1
-# #  final model zero inflated below
-# lnBCT  <- lmer(log(mm2eaten+1) ~  trial.spp +
-#                 (1 | date),
-#               data = BCT.no.0)
-# summary(lnBCT)
-# # beetleID can't be included as a different beetle was used in each trial 
-# 
-# # # regression model -poisson distribution 
-# # # log transformed is better fit
-# # pBCT  <- glmer(mm2eaten ~  trial.spp +
-# #                 (1 | beetleID) + 
-# #                 (1 | date) , 
-# #               data = aOvBT.no.0, 
-# #               family= poisson)  
-# # summary(pBCT)
-# 
-# # year and species on which the beetle was found are excluded 
-# # as random effects due to extremely low variance explained 
-# # causing a singular fit when included
-# 
-# # # evaluating model assumptions
-# # # check residuals
-# # qqnorm(resid(lnBCT)) 
-# # qqline(resid(lnBCT))
-# # 
-# # qqnorm(resid(pBCT)) 
-# # qqline(resid(pBCT)) # maybe slightly better than log transformed
-# 
-# # # looking for over/under dispersion
-# # lnsimOut <- simulateResiduals(lnBCT)
-# # plot(lnsimOut) # better fit than poisson
-# # 
-# # psimOut <- simulateResiduals(pBCT)
-# # plot(psimOut) # significant KS test
-# 
-# # testDispersion(psimOut) # dispersion = 1.1627, p-value = 0.544
-# # testZeroInflation(lnsimOut) # zero inflated: ratioObsSim = 2.8004, p-value < 2.2e-16
-# 
-# # Fitting zero inflated model 
-# #THIS IS THE BEST MODEL, gaussian fails KS test in DHARMa and can't do lognormal bc of 0s
-# library("glmmTMB")
-# ziBCT <- glmmTMB(log(mm2eaten+1) ~  trial.spp +
-#                    (1 | date), 
-#                  ziformula = ~1 , 
-#                  family = "gaussian", 
-#                  data = BCT.no.0)
-# 
-# summary(ziBCT)
-# 
-# # looking at a zero inflated beta 
-# BCT.no.0$per_eaten <- BCT.no.0$mm2eaten/22500
-# 
-# betaBCT <- glmmTMB(per_eaten ~  trial.spp +
-#                    (1 | date), 
-#                  ziformula = ~1 , 
-#                  family=beta_family(), 
-#                  data = BCT.no.0)
-# 
-# summary(betaBCT)
-# # exp(0.3626) = 1.437061 ; so I think this means an average of 1.4 more mm2 eaten on vill...?
-# 
-# emmeans(betaBCT,  ~ trial.spp) 
-# 
-# # evaluating model assumptions
-# # check residuals
-# plot(fitted(ziBCT), resid(ziBCT)) # characteristic fan of poisson glm
-# abline(h=0)
-# # looking for over/under dispersion
-# simOut <- simulateResiduals(betaBCT)
-# plot(simOut) # looks good! No more distribution test or uniformity problems! 
-# testDispersion(simOut) # dispersion = 0.87998, p-value = 0.872
-# testZeroInflation(simOut) # no longer zero inflated: ratioObsSim = 0.97674, p-value = 1
-```
