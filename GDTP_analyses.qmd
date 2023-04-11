@@ -110,17 +110,18 @@ summary(bin_reg)
 # Making a simple barplot of presence/absence herbivory data from both years
 # calculate percentages for plot
 PA_barplot <- Wherb_full %>% group_by(spp, year) %>% summarise(present = sum(pa), N = n()) %>% mutate( percent = present/N*100)
+PA_barplot$label <- c("", "", "0", "")
 # create plot
 H_PA <- ggplot(data=PA_barplot, aes(x=year, y=percent, fill=spp)) +
-  geom_bar(stat="identity", position = position_dodge()) + 
+  geom_bar(stat="identity", position = "dodge") + 
   scale_fill_manual(values = c("#cc79a7", "#f0e442"), name = "Species",
                     labels=c("alle" = expression(italic("C. allenii")),
                              "vill" = expression(italic("C. villosissimus")))) +
-  ggtitle("Field surveyed herbivory") + 
   ylim(0, 100) +
   xlab("year") +
   theme(plot.title = element_text(hjust = 0.5), legend.text.align = 0) +
-  ylab('% of individuals with herbivory')
+  ylab('% of individuals with herbivory') +
+  geom_text(aes(x=year, y=percent+4, label = label, group = spp), size=4, position = position_dodge(width = 0.9))
 # print plot
 H_PA
 
@@ -147,8 +148,6 @@ Wherb19_subset <- Wherb19 %>%
 # # Non-parametric test of 2019 only
 # wilcox.test(Wherb19_subset$per_herbivory ~ Wherb19_subset$species) # W = 90, p-value = 0.0007512
 # ## MEANS:  allenii - 2.54; vill - 0.00
-# #t.test(Wherb19_subset$per_herbivory ~ Wherb19_subset$species) 
-# # t = 3.7367, df = 9, p-value = 0.004649 - differs in signif. use wilcox as appropriate for non-normal data
 
 # Read in the 2022 data 
 Wherb22_subset <- read.csv("2022_Wild_Percent_Herbivory_subset.csv", header = T)
@@ -156,8 +155,6 @@ Wherb22_subset <- read.csv("2022_Wild_Percent_Herbivory_subset.csv", header = T)
 # # Non-parametric test of 2022 data only
 # wilcox.test(Wherb22_subset$ave_per_herb ~ Wherb22_subset$spp) # W = 96, p-value = 0.0003801
 # ## MEANS:  allenii - 3.055  ; vill - 0.1947
-# t.test(Wherb22_subset$ave_per_herb ~ Wherb22_subset$spp) 
-# # t = 4.873, df = 10.446, p-value = 0.0005718 -> use wilcox as appropriate for non-normal data
 
 # 2019/2022 combined
 Wherb19_subset$year <- '2019'
@@ -171,18 +168,25 @@ Wherb_full_subset <- Wherb22_subset %>%
 # plot of herbivory subset data - probably not for inclusion # 
 ggplot(data=Wherb_full_subset, aes(x=year, y=ave_per_herb, fill = spp)) +
   geom_boxplot(outlier.shape=NA) + 
-  geom_point(aes(alpha=0.5), position=position_jitterdodge()) +
+  geom_point(alpha=0.6, position=position_jitterdodge(jitter.width=0.15)) +
   scale_fill_manual(values = c("#cc79a7", "#f0e442"), name = "Species",
                     labels=c("alle" = expression(italic("C. allenii")),
                              "vill" = expression(italic("C. villosissimus")))) +
   theme(plot.title = element_text(hjust = 0.5), legend.text.align = 0) +
-  ggtitle("Field herbivory subset") +
   xlab("") +
-  ylab("percent herbivory")+
+  ylab("% herbivore leaf damage")+
   scale_x_discrete(labels=c("alle" = expression(italic("C. allenii")), 
                             "vill" = expression(italic("C. villosissimus"))))
 
 # ggsave("wild_per_herbivory_plot.png", device = "png", width = 10, height = 8, units = "cm")
+
+# Testing for a difference between years with a nonparametric wilcoxon test
+wilcox.test(Wherb_full_subset$ave_per_herb ~ Wherb_full_subset$year)
+# W = 165, p-value = 0.3185
+
+# Testing for a difference between species with a nonparametric wilcoxon test
+wilcox.test(Wherb_full_subset$ave_per_herb ~ Wherb_full_subset$spp)
+# W = 372, p-value = 7.095e-07
 ```
 
 Here we poke at the data with some stats... Not sure what is best here. All analyses say what is pretty obvious from the plot: percent herbivory clearly varies by species, but likely due to 0s, and does not clearly vary here between years - I think this is an artifact of taking a small subset. Beetles generally seem to eat similar (though highly variable) amounts in each year once they get to a suitable plant - they just find fewer suitable plants in drier years (fewer nice moist rolled leaves).
@@ -222,7 +226,6 @@ ggplot(data=tough, aes(x=species, y=ave)) +
   scale_fill_manual(values = c("#cc79a7", "#f0e442"), name = "Species",
                     labels=c("alle" = expression(italic("C. allenii")),
                              "vill" = expression(italic("C. villosissimus")))) +
-  ggtitle("Leaf Toughness") +
   geom_jitter(alpha=0.6, width=0.15) +
   theme(plot.title = element_text(hjust = 0.5), legend.text.align = 0) +
   xlab("") +
@@ -247,13 +250,17 @@ hist(vill.tough$ave, breaks=20)
 # QQ plots of different fits 
 qqp(alle.tough$ave, "norm")
 qqp(alle.tough$ave, "lnorm") #best 
-shapiro.test(log(alle.tough$ave))
+shapiro.test(log(alle.tough$ave)) # marginal p-value = 0.06202
 qqp(vill.tough$ave, "norm")
 qqp(vill.tough$ave, "lnorm") #best 
 shapiro.test(log(vill.tough$ave)) # could be normal (not not normal)
 
 wilcox.test(tough$ave ~ tough$species, paired = F) #W = 294, p-value = 0.000566 
 t.test(log(tough$ave) ~ tough$species, paired = F) # t = 3.6241, df = 33.24, p-value = 0.0009574
+
+# getting un-transformed averages
+aggregate(tough$ave, list(tough$species), FUN=mean) 
+
 # both say the same thing... which is better to use in the article? 
 ```
 
@@ -470,40 +477,30 @@ qqPlot(singleSP.no0$mm2.eaten, distribution = "pois",lambda = 2) # okay fit
 # regression model - log transformed response and date as a random effect
 gBPT  <- lmer(log(singleSP.no0$mm2.eaten) ~ trial.species * (1 | date), data = singleSP.no0)  
 summary(gBPT)
-# regression model - log transformed response and date as a fixed effect
-gBPT2  <- lm(log(singleSP.no0$mm2.eaten) ~ trial.species * date, data = singleSP.no0)  
-summary(gBPT2)
+Anova(gBPT, type = "III", test.statistic = "F")
 
-# HOW DO I determine if I can leave out date as a random effect and just run a t-test? 
-
-t.test(log(singleSP.no0$mm2.eaten) ~ trial.species, data = singleSP.no0) # t = -1.1442, df = 28.831, p-value = 0.2619
-
-# # regression model - poisson 
-# pBPT  <- glmer(mm2.eaten ~ trial.species + (1 | date), 
-#                data = singleSP.no0, 
-#                family = poisson)  
-# summary(pBPT)
+# gBPT_link <- glmer(mm2.eaten ~ trial.species + (1 | date), data = singleSP.no0, family = gaussian(link = "log"))
+# summary(gBPT_link)
+# t.test(singleSP.no0$mm2.eaten ~ singleSP.no0$trial.species)
 
 # evaluating model assumptions
 # compare residuals
-# log transformed
 qqnorm(resid(gBPT)) 
 qqline(resid(gBPT))
-# # poisson
-# qqnorm(resid(pBPT)) 
-# qqline(resid(pBPT))
-# # log looks a bit better
+# not terrible
+
+# qqnorm(resid(gBPT_link)) 
+# qqline(resid(gBPT_link))
+# # WORSE!
 
 # looking for over/under dispersion
-# log transformed
 gsimOut <- simulateResiduals(gBPT)
-plot(gsimOut) # looks good
+plot(gsimOut) # looks fine
 testDispersion(gsimOut) # p-value = 0.928
-# # poisson
-# psimOut <- simulateResiduals(pBPT)
-# plot(psimOut) # no red flags but doesn't fit as well as log transformed
-# testDispersion(psimOut) # p-value = 0.152
-# # both don't set off warnings, but log transformed looks better.
+
+# gsimOut2 <- simulateResiduals(gBPT_link)
+# plot(gsimOut2) # looks fine
+# testDispersion(gsimOut2) # 0.976
 ```
 
 ### Choice
@@ -563,25 +560,35 @@ palatability + choice + plot_annotation(tag_levels = 'A', tag_suffix = ')') &
 
 Now for the analysis! We first take the difference of mm2 eaten of each species for each beetle/trial to get a single preference value. We then evaluate the impact of a random effect, date, on that preference value. 
 ```{r}
-# take difference of mm2 eaten of each species for each beetle/trial to get a single preference value. (mm2 vill eaten - mm2 alle eaten)
-BCT.no.0 <- BCT.no.0 %>% mutate(preference = vill.mm2eaten - alle.mm2eaten)
+# take difference of mm2 eaten of each species and dividing by total mm2 eaten for each beetle/trial to get a single, standardized preference value. (mm2 vill eaten - mm2 alle eaten) ### IN THIS WAY, possible to control for hungrier beetles, which isn't possible with palatabiliity! May explain why we get the expected result here and a fuzzier result from palatability where we cannot control for that beetle personality variation. 
+BCT.no.0 <- BCT.no.0 %>% mutate(preference = (vill.mm2eaten - alle.mm2eaten)/(vill.mm2eaten + alle.mm2eaten))
 # assess data distribution
-hist(BCT.no.0$preference, breaks=20) # looks normal with gaps haha, so not normal but likely from a normal distribution... I think. 
+hist(BCT.no.0$preference, breaks=20) # Not normal
 
-# evaluate random effect of date on which trial was conducted (temp, humidity, etc of a particular day may impact beetle behavior)
-# as fixed effect
-BCT_lm <- lm(preference ~ date, data = (BCT.no.0))
-summary(BCT_lm) # looks like date doesn't matter
-# as random effect (just looking at variance)
-BCT_lmer <- lmer(preference ~ (1|date), data = (BCT.no.0))
-summary(BCT_lmer) # variance explained by date 2 orders of magnitude lower than residual variance :)
+# transform data to fit a beta distribution:
+BCT.no.0 <- BCT.no.0 %>% mutate(preference_beta = (preference + 1)/(1+1),
+                                preference_beta = case_when(
+                                  preference_beta == 0 ~ preference_beta + 0.0001,
+                                  preference_beta == 1 ~ preference_beta - 0.0001, 
+                                  TRUE ~ preference_beta))
+
+# Check the fit
+fit <- fitdist(BCT.no.0$preference_beta, "beta")
+# Check the goodness of fit
+descdist(BCT.no.0$preference_beta, "beta", fit$estimate)
+plot(fit) # not terrible, the best I can do
+
+library(betareg)
+beta <- betareg(preference_beta ~ 1 | date, data = BCT.no.0)
+summary(beta)
+
+# try nonparametric without date 
+wilcox.test(BCT.no.0$preference, mu = 0)
 ```
 We see that, when treated as a fixed effect, no date has a significant (to the .05 level) impact on beetle preference. When treated as a random effect, the variance explained by date 2 orders of magnitude lower than residual variance. Together, this indicates date is not important to include when assessing preference. 
   So, next we compare the mean amount eaten of each species within a trial with a paired t-test to evaluate whether beetles prefer one species over ther other in controlled trial conditions
 ```{r}
-# now that I am convinced the random variable is not strongly influencing preference, I can compare amount eaten of each species within trial with a paired T-test. 
-# paired t-test
-t.test(BCT.no.0$vill.mm2eaten, BCT.no.0$alle.mm2eaten, paired = T) # t = 1.0992, df = 34, p-value = 0.2794
+#  if the data are highly non-normal, a 1-sample Wilcoxon test: wilcox.test(normalized_diff, mu = 0)
 ```
 OKAY! So I think this way to analyze the data makes sense, but I need help figuring out how to talk about it. The p-value is definitely not 'significant' (0.28), but there is a trend in the data towards greater herbivory on vill than alle (as seen in the figure above). I also saw this in the other ways I analyzed the data. For example, in a bayesian framework, 80% or so of the posterior distribution supported beetles eating more vill than alle. How do I talk about this in the article to accurately represent the data?
 
