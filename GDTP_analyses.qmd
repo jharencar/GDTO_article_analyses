@@ -585,16 +585,6 @@ summary(beta)
 # try nonparametric without date 
 wilcox.test(BCT.no.0$preference, mu = 0)
 ```
-We see that, when treated as a fixed effect, no date has a significant (to the .05 level) impact on beetle preference. When treated as a random effect, the variance explained by date 2 orders of magnitude lower than residual variance. Together, this indicates date is not important to include when assessing preference. 
-  So, next we compare the mean amount eaten of each species within a trial with a paired t-test to evaluate whether beetles prefer one species over ther other in controlled trial conditions
-```{r}
-#  if the data are highly non-normal, a 1-sample Wilcoxon test: wilcox.test(normalized_diff, mu = 0)
-```
-OKAY! So I think this way to analyze the data makes sense, but I need help figuring out how to talk about it. The p-value is definitely not 'significant' (0.28), but there is a trend in the data towards greater herbivory on vill than alle (as seen in the figure above). I also saw this in the other ways I analyzed the data. For example, in a bayesian framework, 80% or so of the posterior distribution supported beetles eating more vill than alle. How do I talk about this in the article to accurately represent the data?
-
-Here is my best guess:
-  Roleld leaf beetles, on average, ate more *C. villosissimus* than *C. allenii*. These trends were not significant at the 0.05 level, likely due to high variability in beetle behavior. However, the trend is present in both palatibility and choice trials, and aligns with chemistry and toughness data: beetles are expected to prefer the species with thinner, less chemically defended leaves. 
-  This pattern is also contradictory to the clearly greater beetle herbivory on *C. allenii* than *C. villosissimus* seen in the wild. To understand whether this contradiction is due to differing environmental conditions in the habitat of each species, we placed 'herbivory arrays' into intermediate habitat.
   
 ## Herbivory arrays
   Herbivory arrays consisted of a potted plant of each species (*C. villosissimus* and *C. allenii*) placed near a wild plant of a third species (*C. scaber*) that was colonized by at least one roleld leaf beetle. Arrays were placed in intermediate habitat along a creek on the seasonally dry side of the panamanian isthmus. It was not pooossible to accurately quantify the area eaten (area og beetle damage) after plants were in the field for 3 weeks, so we instead evaluate the proportion of healthy stems that experienced herbivory. (analysis of best guess estimates of area yeild qualitatively the same result)
