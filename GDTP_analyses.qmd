@@ -44,6 +44,14 @@ library("RColorBrewer")
 theme_set(theme_bw())
 
 ```
+## Figure 1 - Niche and range map
+
+```{r}
+# import Julia pairs
+sis.sum <- read.csv("julia_pairs.csv")
+
+# KK code etc in dropbox (jharenca@ucsc account)
+```
 
 ## Wild herbivory
 
@@ -568,26 +576,48 @@ hist(BCT.no.0$preference, breaks=20) # Not normal
 # transform data to fit a beta distribution:
 BCT.no.0 <- BCT.no.0 %>% mutate(preference_beta = (preference + 1)/(1+1),
                                 preference_beta = case_when(
-                                  preference_beta == 0 ~ preference_beta + 0.0001,
-                                  preference_beta == 1 ~ preference_beta - 0.0001, 
+                                  preference_beta == 0 ~ preference_beta + 0.00001,
+                                  preference_beta == 1 ~ preference_beta - 0.00001, 
                                   TRUE ~ preference_beta))
 
-# Check the fit
-fit <- fitdist(BCT.no.0$preference_beta, "beta")
-# Check the goodness of fit
-descdist(BCT.no.0$preference_beta, "beta", fit$estimate)
-plot(fit) # not terrible, the best I can do
-
+# beta regression with date as a random effect
 library(betareg)
 beta <- betareg(preference_beta ~ 1 | date, data = BCT.no.0)
 summary(beta)
 
-# try nonparametric without date 
-wilcox.test(BCT.no.0$preference, mu = 0)
+# # generalize lm with beta family - different way to run beta regression
+# library(glmmTMB) 
+# beta2 <- glmmTMB(preference_beta ~ (1 | date),
+#               data = BCT.no.0, 
+#               family=beta_family(link = "logit"))
+# summary(beta2)  
+# 
+# # Check the fit
+# plot(beta) # looks fine
+# #comparing fits
+# lmtest::lrtest(beta, beta2) # one not better than the other
+# # check residuals for mod1
+# qqnorm(resid(beta)) 
+# qqline(resid(beta)) # better
+# # check residuals for mod2
+# qqnorm(resid(beta2)) 
+# qqline(resid(beta2)) # worse
+# 
+# simOut <- simulateResiduals(beta2)
+# plot(simOut) # not great but passes
+# testDispersion(simOut) # not great but passes
+# 
+# # try nonparametric without date 
+# wilcox.test(BCT.no.0$preference, mu = 0) # V = 372.5, p-value = 0.1916
+
+# calculate how much more vill than alle beetles ate on average:
+per_greater <- (mean(BCT.no.0$vill.mm2eaten) - mean(BCT.no.0$alle.mm2eaten))/( mean(BCT.no.0$alle.mm2eaten))*100 # ~39%
+
+# Summary of a bunch of tinkering and my insecurities: log ratio tests suggest that date is not important to include, but it does have biological relvance as shown by the palatability trials, and therefore I think it is important to include. Wilcox test and beta regression with glmmTMB instead of betareg both yeild a p-value around 0.1 rather than 0.01 as in betareg... But Betareg seems both appropriate for the data as I don't think there is strong heteroscedasticity based on the fit of plot(beta) - vertical line, not even sure it is relevant without a response variable...? Plus, betareg uses maximum likelihood rather than a generalization of the Laplace approximation to approximate the likelihood (which is what glmmTMB performs).
 ```
   
 ## Herbivory arrays
-  Herbivory arrays consisted of a potted plant of each species (*C. villosissimus* and *C. allenii*) placed near a wild plant of a third species (*C. scaber*) that was colonized by at least one roleld leaf beetle. Arrays were placed in intermediate habitat along a creek on the seasonally dry side of the panamanian isthmus. It was not pooossible to accurately quantify the area eaten (area og beetle damage) after plants were in the field for 3 weeks, so we instead evaluate the proportion of healthy stems that experienced herbivory. (analysis of best guess estimates of area yeild qualitatively the same result)
+  Herbivory arrays consisted of a potted plant of each species (*C. villosissimus* and *C. allenii*) placed near a wild plant of a third species (*C. scaber*) that was colonized by at least one roleld leaf beetle. Arrays were placed in intermediate habitat along a creek on the seasonally dry side of the panamanian isthmus. It was not possible to accurately quantify the area eaten (area of beetle damage) after plants were in the field for 3 weeks, so we instead evaluate the proportion of healthy stems that experienced herbivory. (analysis of best guess estimates of area yield qualitatively the same result)
   
 Data importing, cleaning, and plotting:
 ```{r}
@@ -667,6 +697,5 @@ qqp(dat$alle-dat$vill, "norm")
 wilcox.test(dat$alle, dat$vill, paired = T) # V = 110, p-value = 0.111
 t.test(dat$alle, dat$vill, paired = T) # t = 1.6954, df = 25, p-value = 0.1024
 
-# all results are qualitatively (and close to quantitatively) the same: no significant difference between species.
-## NOTE - pick up in paper - explain as above - report t-test
+# Here, l
 ```
