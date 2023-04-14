@@ -825,6 +825,8 @@ qqp(W_tot_herbiv$alle-W_tot_herbiv$vill, "norm")
 # paired t-test
 t.test(W_tot_herbiv$alle, W_tot_herbiv$vill, paired = T) # t = 0.77779, df = 23, p-value = 0.4446
 wilcox.test(W_tot_herbiv$alle, W_tot_herbiv$vill, paired = T) # V = 195, p-value = 0.2076
+mean_alle <- mean(W_tot_herbiv$alle, na.rm = TRUE)
+mean_vill <- mean(W_tot_herbiv$vill, na.rm = TRUE)
 
 ### Summary
 # I could only get a regression to fit log(data+1) transformed response, but found that the model without any random variables is the best fit based on AIC comparison and log likelihood ratio tests. THis indicates we can ignore those random variables and conduct paired mean tests. The difference between vill and alle percent eaten is not normal based on a shapiro test (though it looks pretty normal in a hist), but is close to normal and passes the shapiro test for total herbivory. For both, I conducted wilcox tests in addition to t-tests. The level of significance does not differ between the tests. Given that t-tests are pretty robust to non-normality, I think I should go with the t-test of total amount eaten - this tells us more abotu how beetles are behaving in the enviromnet than percent of the leaf eaten, which tells us more about how the plant experiences herbivory in the environment. 
