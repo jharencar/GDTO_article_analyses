@@ -45,7 +45,7 @@ theme_set(theme_bw())
 
 ```
 ## Figure 1 - Niche and range map
-
+Here I build a climate PCA figure and distribution maps for C. allenii and C. villosissimus, building from code and data originally assembled by Dena Grossenbacher and Oscar Vargas.
 ```{r}
 library(dismo) #raster manipulation
 library(ecospat) # climate pca and niche equivalency
@@ -54,6 +54,7 @@ library(distances) # euclidean distances
 library(ContourFunctions) #make title with multiple colors
 library(weights) # weighted chi squared
 library(ade4) # PCA
+
 #import climate raster stack (created using getclimateraster.R; stacked in this order: bio1,bio4,bio12,bio15)
 envs = stack("data/envs.tif") 
 ###########################################
@@ -178,11 +179,10 @@ spsum <- merge(spsum,df.ngrids, by="acceptedScientificName")
 sis.sum <- read.csv("data/julia_pairs.csv")
 
 library(colorblindcheck)
-palette_check(c("#cc79a7",  "#56B4E9","#f0e442", "#50be73"), plot = TRUE)
+palette_check(c("#cc79a7",  "#56B4E9","#FFD700", "#50be73"), plot = TRUE)
 
 #plot
-pdf("figures/Figure_VillClade.pdf",  width=6,height=6)  
-#par(cex.lab=1) #mar=c(5, 4, 1.4, 0.2),
+#pdf("figures/Figure_VillClade.pdf",  width=6,height=6)  
 for (i in 1:nrow(sis.sum)) {
   plot(df.downsampled$Axis1,df.downsampled$Axis2, xlab="climate axis 1", ylab="climate axis 2", pch=20, col="lightgray")
   abline(h=0, col="darkgray"); abline(v=0, col="darkgray")
@@ -193,13 +193,13 @@ for (i in 1:nrow(sis.sum)) {
   points(sis.d$Axis1,sis.d$Axis2, col="#50be73", pch=1, lwd=2) #lasius green
   points(sis.b$Axis1,sis.b$Axis2, col="#56B4E9", pch=1, lwd=2) #bracteatus blue
   points(sis.a$Axis1,sis.a$Axis2, col="#cc79a7", pch=1, lwd=2) #allenii pink
-  points(sis.c$Axis1,sis.c$Axis2, col="#f0e442", pch=1, lwd=2) #vill yellow
+  points(sis.c$Axis1,sis.c$Axis2, col="#FFD700", pch=1, lwd=2) #vill yellow
   #draw connector line for euclidean distance
   #segments(mean(sis.a$Axis1),mean(sis.a$Axis2), mean(sis.b$Axis1), mean(sis.b$Axis2), lwd=2, col="green")
   #multicolor.title(c(as.character(sis.sum$a.label[i])," - ",as.character(sis.sum$b.label[i])),c("black","darkgray", "red"))
   legend("bottomleft", 
          legend = c("C. lasius", "C. bracteatus", "C. allenii",  "C. villosissimus"), 
-         col = c("#009E73", "#56B4E9", "#cc79a7",  "#f0e442"), 
+         col = c("#009E73", "#56B4E9", "#cc79a7",  "#FFD700"), 
          pch = 1, 
          bty = "n",
          pt.cex = 1.5, 
@@ -209,15 +209,75 @@ for (i in 1:nrow(sis.sum)) {
          horiz = F , 
          inset = c(0.05, 0.05))
 }
+#dev.off()
+```
+### Make range maps for C. allenii and C. villosissimus
+```{r}
+##########################################
+# Make range maps for C. allenii and C. villosissimus
+##########################################
+setwd("/Users/Julia/Library/CloudStorage/GoogleDrive-jharenca@ucsc.edu/My Drive/Costus/Genomes/distribution\ maps")
+library(rgdal) # read OGR vector maps into Spatial objects
+library(elevatr) # get raster elevation
+library(raster) # creating rasters
+library(maps) # geographic maps
+library(mapproj) # apply a map projection
+
+df.occur <- read.csv(file = "cleaned.occurrences.csv", as.is=TRUE, sep=",")
+
+lon.low <- -1+min(df.occur$decimalLongitude)
+lon.high <- 1+max(df.occur$decimalLongitude)
+lat.low <- -1+min(df.occur$decimalLatitude)
+lat.high <- 1+max(df.occur$decimalLatitude)
+
+# Generate a data frame of lat/long coordinates.
+ex.df <- data.frame(x=seq(from=lon.low, to=lon.high, length.out=10), 
+                    y=seq(from=lat.low, to=lat.high, length.out=10))
+
+# Specify projection.
+prj_dd <- "+proj=longlat +ellps=WGS84 +datum=WGS84 +no_defs"
+
+# Use elevatr package to get elevation data for each point.
+elev <- get_elev_raster(ex.df, prj = prj_dd, z = 5, clip = "bbox")
+
+#crop to just land areas
+path.data <- "worldboarders"
+world_borders <- readOGR(dsn = path.data, layer = "TM_WORLD_BORDERS-0.3")
+projection(world_borders) <- CRS(prj_dd)
+
+# Crop elevation data by extent of world boarders
+elev <- crop(elev, extent(world_borders))
+
+#identify  pixels of elevation raster that lie within the borders of land
+elev <- mask(elev, world_borders)
+```
+```{r}
+# subset just the desired occurance data for C. villosissimus anc C. allenii
+vill.occur <- df.occur %>% filter(acceptedScientificName == "Costus villosissimus Jacq.")
+alle.occur <- df.occur %>% filter(acceptedScientificName == "Costus allenii Maas")
+
+###define extent of map
+lon.low= -1+min(vill.occur$decimalLongitude)
+lon.high= 1+max(vill.occur$decimalLongitude)
+lat.low= -1+min(vill.occur$decimalLatitude)
+lat.high= 1+max(vill.occur$decimalLatitude)
+
+pdf(file="figures/Range_Map2.pdf",  width=8,height=6) 
+
+map("world", resolution=0, wrap=T, mar=c(2,2,2,0),xlim=c(lon.low, lon.high),ylim=c(lat.low, lat.high), main="test", col="grey")
+  vill <- mapproject(vill.occur$decimalLongitude, vill.occur$decimalLatitude, proj="")
+  alle <- mapproject(alle.occur$decimalLongitude, alle.occur$decimalLatitude, proj="")
+  plot(elev, col = gray.colors(25, start = 0.5, end = 1, gamma = 1, alpha = 1), add = TRUE, legend=F)
+  points(vill, col="#FFD700", cex=.8, pch=19)
+  points(alle, col="#cc79a7", cex=.8, pch=19)
+  # points(vill, bg="#FFD700", cex=1, pch=21, col = "black")
+  # points(alle, bg="#cc79a7", cex=1, pch=21, col = "black")
+  
 dev.off()
 
-##########################################
-# Make ran ge maps for C. allenii and C. villosissimus
-##########################################
-
-
-
 ```
+
+
 
 ## Wild herbivory
 
@@ -279,7 +339,7 @@ summary(bin_reg)
 
 # # code for choosing colorblind friendly colors. 
 # library(colorblindcheck)
-# palette_check(c("#cc79a7", "#f0e442"), plot = TRUE)
+# palette_check(c("#cc79a7", "#FFD700"), plot = TRUE)
 
 # Making a simple barplot of presence/absence herbivory data from both years
 # calculate percentages for plot
@@ -288,7 +348,7 @@ PA_barplot$label <- c("", "", "0", "")
 # create plot
 H_PA <- ggplot(data=PA_barplot, aes(x=year, y=percent, fill=spp)) +
   geom_bar(stat="identity", position = "dodge") + 
-  scale_fill_manual(values = c("#cc79a7", "#f0e442"), name = "Species",
+  scale_fill_manual(values = c("#cc79a7", "#FFD700"), name = "Species",
                     labels=c("alle" = expression(italic("C. allenii")),
                              "vill" = expression(italic("C. villosissimus")))) +
   ylim(0, 100) +
@@ -343,7 +403,7 @@ Wherb_full_subset <- Wherb22_subset %>%
 ggplot(data=Wherb_full_subset, aes(x=year, y=ave_per_herb, fill = spp)) +
   geom_boxplot(outlier.shape=NA) + 
   geom_point(alpha=0.6, position=position_jitterdodge(jitter.width=0.15)) +
-  scale_fill_manual(values = c("#cc79a7", "#f0e442"), name = "Species",
+  scale_fill_manual(values = c("#cc79a7", "#FFD700"), name = "Species",
                     labels=c("alle" = expression(italic("C. allenii")),
                              "vill" = expression(italic("C. villosissimus")))) +
   theme(plot.title = element_text(hjust = 0.5), legend.text.align = 0) +
@@ -397,7 +457,7 @@ tough <- read.csv("data/leaf.toughness.csv", header = TRUE)
 # Plot leaf toughness 
 ggplot(data=tough, aes(x=species, y=ave)) +
   geom_boxplot(outlier.shape=NA, aes(fill = species)) + 
-  scale_fill_manual(values = c("#cc79a7", "#f0e442"), name = "Species",
+  scale_fill_manual(values = c("#cc79a7", "#FFD700"), name = "Species",
                     labels=c("alle" = expression(italic("C. allenii")),
                              "vill" = expression(italic("C. villosissimus")))) +
   geom_jitter(alpha=0.6, width=0.15) +
@@ -453,7 +513,7 @@ names(chem) <-  c("Accession", "Species", "DPPH", "Oxidative.Capacity",
 # Saponins
  S <- ggplot(chem, aes(x=Species, y=Concentration.of.Saponins)) +
   geom_boxplot(outlier.shape=NA, aes(fill = Species)) + 
-  scale_fill_manual(values = c("#cc79a7", "#f0e442"), name = "Species") +
+  scale_fill_manual(values = c("#cc79a7", "#FFD700"), name = "Species") +
   ggtitle("Saponins") + 
   geom_jitter(alpha=0.6, width=0.15) +
   guides(fill="none") +
@@ -470,7 +530,7 @@ names(chem) <-  c("Accession", "Species", "DPPH", "Oxidative.Capacity",
 # Non-flavonoid Phenolics
 P <- ggplot(chem, aes(x=Species, y=Concentration.of.NF.Phenolics)) +
   geom_boxplot(outlier.shape=NA, aes(fill = Species)) + 
-  scale_fill_manual(values = c("#cc79a7", "#f0e442"), name = "Species") +
+  scale_fill_manual(values = c("#cc79a7", "#FFD700"), name = "Species") +
   ggtitle("Non-Flavonoid Phenolics") +
   geom_jitter(alpha=0.6, width=0.15) +
   guides(fill="none") +
@@ -487,7 +547,7 @@ P <- ggplot(chem, aes(x=Species, y=Concentration.of.NF.Phenolics)) +
 # Flavonids
 Fl <- ggplot(chem, aes(x=Species, y=Concentration.of.Flavonols)) +
   geom_boxplot(outlier.shape=NA, aes(fill = Species)) + 
-  scale_fill_manual(values = c("#cc79a7", "#f0e442"), name = "Species",
+  scale_fill_manual(values = c("#cc79a7", "#FFD700"), name = "Species",
                     labels=c("ALLE" = expression(italic("C. allenii")),
                              "VILL" = expression(italic("C. villosissimus")))) +
   ggtitle("Flavonoids") +
@@ -506,7 +566,7 @@ Fl <- ggplot(chem, aes(x=Species, y=Concentration.of.Flavonols)) +
 # Oxidative capacity 
 OC <- ggplot(chem, aes(x=Species, y=Oxidative.Capacity)) +
   geom_boxplot(outlier.shape=NA, aes(fill = Species)) + 
-  scale_fill_manual(values = c("#cc79a7", "#f0e442"), name = "Species",
+  scale_fill_manual(values = c("#cc79a7", "#FFD700"), name = "Species",
                     labels=c("ALLE" = expression(italic("C. allenii")),
                              "VILL" = expression(italic("C. villosissimus")))) +
   ggtitle("Oxidative Capacity") +
@@ -623,7 +683,7 @@ palatability <- ggplot(singleSP.no0, aes(trial.species, mm2.eaten)) +
   geom_boxplot(outlier.shape=NA, aes(fill = trial.species)) + 
   ggtitle("Palatability Trials") + 
   geom_jitter(alpha=0.6, width=0.15) +
-  scale_fill_manual(values = c("#cc79a7", "#f0e442"), name = "Species") +
+  scale_fill_manual(values = c("#cc79a7", "#FFD700"), name = "Species") +
   guides(fill="none") +
   theme(plot.title = element_text(hjust = 0.5)) +
   ylab('herbivory ('~mm^2*')') + 
@@ -706,7 +766,7 @@ BCT.no.0.long$trial.spp <- substr(BCT.no.0.long$trial.spp, 1, 4)
 # box plot of choice data 
 choice <- ggplot(BCT.no.0.long, aes(trial.spp, mm2eaten)) + 
   geom_boxplot(outlier.shape=NA, aes(fill = trial.spp)) + 
-  scale_fill_manual(values = c("#cc79a7", "#f0e442"), name = "Species",
+  scale_fill_manual(values = c("#cc79a7", "#FFD700"), name = "Species",
                     labels=c("alle" = expression(italic("C. allenii")),
                              "vill" = expression(italic("C. villosissimus")))) +
   ggtitle("Choice Trials") + 
@@ -819,7 +879,7 @@ PA_barplot <- array_long %>% group_by(spp) %>% summarise(present = sum(per_st_pa
 # plot this data
 H_PA <- ggplot(data=PA_barplot, aes(x=spp, y=percent, fill=spp)) +
   geom_bar(stat="identity", position = "dodge") + 
-  scale_fill_manual(values = c("#cc79a7", "#f0e442"), name = "Species",
+  scale_fill_manual(values = c("#cc79a7", "#FFD700"), name = "Species",
                     labels=c("alle" = expression(italic("C. allenii")),
                              "vill" = expression(italic("C. villosissimus"))))
   
@@ -924,7 +984,7 @@ boxplot(all_ests$total_herbiv~all_ests$spp)
 # Nice version of the plot
 array_est <- ggplot(all_ests, aes(spp, total_herbiv)) + 
   geom_boxplot(outlier.shape=NA, aes(fill = spp)) + 
-  scale_fill_manual(values = c("#cc79a7", "#f0e442"), name = "Species",
+  scale_fill_manual(values = c("#cc79a7", "#FFD700"), name = "Species",
                     labels=c("alle" = expression(italic("C. allenii")),
                              "vill" = expression(italic("C. villosissimus")))) +
   ggtitle("Herbivory Arrays") + 
