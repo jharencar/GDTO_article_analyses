@@ -907,4 +907,3 @@ WH_PA + choice + array_est +
 
 ggsave("figures/Figure_3_Herbivory_patterns.png", device = "png", width = 23, height = 8, units = "cm")
 ```
-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
