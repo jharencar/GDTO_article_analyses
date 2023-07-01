@@ -457,7 +457,8 @@ OC <- ggplot(chem, aes(x=Species, y=Oxidative.Capacity)) +
         plot.tag = element_text(size = 11.5, hjust = 0, vjust = 0))
 
 ##ggsave("Chemistry/Chemistry_plot", device = "png", width = 24, height = 20, units = "cm")
-#ggsave("figures/Chemistry_plot_free_scale.png", device = "png", width = 18, height = 19, units = "cm")
+ggsave("figures/Figure_2_Chemistry_plot_free_scale.png", device = "png", width = 18, height = 19, units = "cm")
+ggsave("figures/Figure_2_Chemistry_plot_free_scale.pdf", device = "pdf", width = 18, height = 19, units = "cm")
 ```
 
 Next, we conduct t-tests comparing values between species and correct for multiple tests.
@@ -714,7 +715,7 @@ BCT.no.0.long <- BCT.no.0 %>%
 BCT.no.0.long$trial.spp <- substr(BCT.no.0.long$trial.spp, 1, 4) 
 
 # box plot of choice data 
-choice <- ggplot(BCT.no.0.long, aes(trial.spp, mm2eaten)) + 
+# choice <- ggplot(BCT.no.0.long, aes(trial.spp, mm2eaten)) + 
   geom_boxplot(outlier.shape=NA, aes(fill = trial.spp)) + 
   scale_fill_manual(values = c("#cc79a7", "#FFD700"), name = "Species",
                     labels=c("alle" = expression(italic("C. allenii")),
@@ -728,12 +729,10 @@ choice <- ggplot(BCT.no.0.long, aes(trial.spp, mm2eaten)) +
                            "vill" = expression(italic(" villosissimus")))) + 
   theme(axis.text.x = element_text(hjust = 0.6, colour = "black")) + 
   geom_text(x='vill', y=42, aes(label = "p=0.013"), size=3.5) +
-  theme(axis.text.x = element_text(hjust = 0.6, colour = "black")) + 
   theme(axis.text = element_text(size = 10))  
 
-#ggsave("beetle_choice_plot", device = "png", width = 5, height = 5, units = "cm")
+#ggsave("figures/beetle_choice_plot", device = "png", width = 5, height = 5, units = "cm")
 #ggsave("beetle_choice_plot2", device = "png", width = 9, height = 6, units = "cm")
-
 ```
 
 Now for the analysis! We first take the difference of mm2 eaten of each species for each beetle/trial to get a single preference value. We then evaluate the impact of a random effect, date, on that preference value.
@@ -759,6 +758,24 @@ summary(beta)
 
 # calculate how much more vill than alle beetles ate on average:
 per_greater <- (mean(BCT.no.0$vill.mm2eaten) - mean(BCT.no.0$alle.mm2eaten))/( mean(BCT.no.0$alle.mm2eaten))*100 # ~39%
+
+# plotting the preference value instead of raw data
+choice <- ggplot(BCT.no.0, aes(x = 1, y = preference)) +
+  geom_violin(fill = "gray91", color = "black") +
+  geom_point(aes(fill = ifelse(preference > 0, "preference for vill", "preference for alle")),
+             position = position_jitter(seed = 1, width = 0.25), size = 2, shape = 21, color = "black") +
+  scale_fill_manual(values = c("preference for vill" = "#FFD700", "preference for alle" = "#cc79a7"), labels = c(expression("Preference for\n"~italic("C. villosissimus")),
+                               expression("Preference for\n"~italic("C. allenii")))) +
+  geom_hline(yintercept = 0, linetype = "dashed", color = "red") +
+  ggtitle("Beetle choice trials") +
+  geom_text(x=1.25, y=0.85, aes(label = "p=0.013"), size=3.5) +
+  theme(legend.position="none",
+        axis.title.x = element_blank(),
+        axis.text.x = element_blank(),
+        axis.ticks.x = element_blank(),
+        axis.text = element_text(size = 10))
+
+ggsave("figures/beetle_preference_plot.png", device = "png", width = 12, height = 10, units = "cm")
 ```
 
 ## Herbivory arrays
@@ -906,4 +923,5 @@ WH_PA + choice + array_est +
          plot.tag = element_text(size = 11.5, hjust = 0, vjust = 0))
 
 ggsave("figures/Figure_3_Herbivory_patterns.png", device = "png", width = 23, height = 8, units = "cm")
+ggsave("figures/Figure_3_Herbivory_patterns.pdf", device = "pdf", width = 23, height = 8, units = "cm")
 ```
