@@ -20,7 +20,8 @@ leaf.toughness.csv - Contains 3 leaf toughness measures per individual, taken at
 Full_chem_data.csv - Chemistry data for 6 individuals of each species.
 # wild herbivory data 
 vill-all_RLB-herbivory_data_2019-Herbivory.csv - Percent herbivory data for all plants measured in 2019.
-2022_wild_herbivory.csv - Percent herbivory data for all plants measured in 2022
+2022_wild_herbivory.csv - Presence/absence herbivory data for all plants measured in 2022
+2022_Wild_Percent_Herbivory_subset.csv - percent herbivory data for a subset of 2022 plants
 # beetle feeding trials
 beetle_trials.csv - Data from beetle feeding trials. The beetle choice trials analyzed for this article are those with "alle/vill" in the "Species.in.trial" column. Other rows have palatability data from trials in which beetles only had one leaf square of one species to eat. Analysis of this data was removed from the article as there are not enough trials to overcome huge variability in individual beetle "hungriness". We were able to account for this by calculating a preference score from the choice trials. 
 # herbivory arrays
